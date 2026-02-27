@@ -21,6 +21,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'role_global',
     ];
 
     /**
@@ -45,4 +46,32 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    public function adhesions()
+    {
+        return $this->hasMany(Adhesion::class, 'utilisateur_id');
+    }
+
+    public function colocations()
+    {
+        return $this->belongsToMany(Colocation::class, 'adhesions', 'utilisateur_id', 'colocation_id')
+            ->withPivot(['role_dans_colocation', 'date_adhesion', 'left_at'])
+            ->withTimestamps();
+    }
+
+    public function depenses()
+    {
+        return $this->hasMany(Depense::class, 'payeur_id');
+    }
+
+    public function paiementsEffectues()
+    {
+        return $this->hasMany(Paiement::class, 'payeur_id');
+    }
+
+    public function paiementsRecus()
+    {
+        return $this->hasMany(Paiement::class, 'beneficiaire_id');
+    }
 }
+

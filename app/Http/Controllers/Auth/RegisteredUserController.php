@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\Invitation;
 use App\Models\User;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
@@ -17,9 +18,19 @@ class RegisteredUserController extends Controller
     /**
      * Display the registration view.
      */
-    public function create(): View
+    public function create(Request $request): View
     {
-        return view('auth.register');
+        $inviteToken = $request->query('invite');
+        $email = '';
+
+        if ($inviteToken) {
+            $invitation = Invitation::where('token', $inviteToken)->first();
+            if ($invitation && !$invitation->estExpiree() && $invitation->statut === 'en_attente') {
+                $email = $invitation->email;
+            }
+        }
+
+        return view('auth.register', compact('inviteToken', 'email'));
     }
 
     /**
@@ -31,7 +42,7 @@ class RegisteredUserController extends Controller
     {
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
+            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:' . User::class],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
@@ -41,7 +52,7 @@ class RegisteredUserController extends Controller
             'password' => Hash::make($request->password),
         ]);
 
-        if(User::count() === 1) {
+        if (User::count() === 1) {
             $user->role_global = 'admin';
             $user->save();
         }
@@ -49,6 +60,21 @@ class RegisteredUserController extends Controller
         event(new Registered($user));
 
         Auth::login($user);
+
+        if ($request->filled('invite_token')) {
+            $invitation = Invitation::where('token', $request->invite_token)->first();
+
+            if ($invitation && !$invitation->estExpiree() && $invitation->statut == 'en_attente') {
+                $invitation->update(['statut' => 'acceptee']);
+
+                $invitation->colocation->membres()->attach($user->id, [
+                    'role_dans_colocation' => 'membre',
+                    'date_adhesion' => now(),
+                ]);
+                return redirect()->route('colocations.show', $invitation->colocation_id)
+                    ->with('success', 'T\'es dedans now !');
+            }
+        }
 
         return redirect(route('dashboard', absolute: false));
     }
