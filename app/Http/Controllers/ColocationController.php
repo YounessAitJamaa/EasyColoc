@@ -59,8 +59,31 @@ class ColocationController extends Controller
             abort(403, 'C\'est pas pour toi ca.');
         }
 
+        $membres = $colocation->membres;
+        $depenses = $colocation->depenses;
+
+        $totalDepenses = $depenses->sum('montant');
+        $nombreMembres = $membres->count();
+        $partIndividuelle = $nombreMembres > 0 ? $totalDepenses / $nombreMembres : 0;
+
+        $balances = [];
+
+        foreach ($membres as $membre) {
+            $payParCeMembre = $depenses->where('payeur_id', $membre->id)->sum('montant');
+            $solde = $payParCeMembre - $partIndividuelle;
+
+            $balances[$membre->id] = [
+                'nom' => $membre->name,
+                'paye' => $payParCeMembre,
+                'solde' => $solde,
+            ];
+        }
+
         return view('colocations.show', [
             'colocation' => $colocation->load(['membres', 'categories', 'depenses']),
+            'totalDepenses' => $totalDepenses,
+            'partIndividuelle' => $partIndividuelle,
+            'balances' => $balances,
         ]);
     }
 }
