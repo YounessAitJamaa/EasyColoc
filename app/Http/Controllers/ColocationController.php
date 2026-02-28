@@ -70,7 +70,13 @@ class ColocationController extends Controller
 
         foreach ($membres as $membre) {
             $payParCeMembre = $depenses->where('payeur_id', $membre->id)->sum('montant');
-            $solde = $payParCeMembre - $partIndividuelle;
+
+            $remboursementDonnes = $colocation->paiements->where('payeur_id', $membre->id)->sum('montant');
+            $remboursementRecus = $colocation->paiements->where('beneficiaire_id', $membre->id)->sum('montant');
+
+            $totalReellementPaye = $payParCeMembre + $remboursementDonnes - $remboursementRecus;
+ 
+            $solde = $totalReellementPaye - $partIndividuelle;
 
             $balances[$membre->id] = [
                 'id' => $membre->id,
@@ -79,7 +85,7 @@ class ColocationController extends Controller
                 'solde' => $solde,
             ];
         }
-
+        
         // --- Logique "Qui doit a qui" ---
         $debiteurs = [];
         $creanciers = [];
@@ -122,7 +128,7 @@ class ColocationController extends Controller
         }
 
         return view('colocations.show', [
-            'colocation' => $colocation->load(['membres', 'categories', 'depenses']),
+            'colocation' => $colocation->load(['membres', 'categories', 'depenses', 'paiements']),
             'totalDepenses' => $totalDepenses,
             'partIndividuelle' => $partIndividuelle,
             'balances' => $balances,

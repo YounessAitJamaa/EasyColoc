@@ -134,6 +134,24 @@
                                                 à <strong class="text-green-600">{{ $suggestion['receveur_nom'] }}</strong>
                                             </span>
                                         </div>
+
+                                        <!-- Bouton pour confirmer le paiement -->
+                                        @if($isOwner || $suggestion['payeur_id'] == Auth::id() || $suggestion['receveur_id'] == Auth::id())
+                                            <form action="{{ route('paiements.store') }}" method="POST" class="mt-3">
+                                                @csrf
+                                                <input type="hidden" name="colocation_id" value="{{ $colocation->id }}">
+                                                <input type="hidden" name="payeur_id" value="{{ $suggestion['payeur_id'] }}">
+                                                <input type="hidden" name="beneficiaire_id"
+                                                    value="{{ $suggestion['receveur_id'] }}">
+                                                <input type="hidden" name="montant" value="{{ $suggestion['montant'] }}">
+
+                                                <button type="submit"
+                                                    class="w-full text-[11px] bg-gray-800 text-white py-1 rounded hover:bg-gray-700 transition"
+                                                    onclick="return confirm('Est-ce que l\'argent a bien ete donne ?');">
+                                                    {{ __('Marquer payé') }}
+                                                </button>
+                                            </form>
+                                        @endif
                                     </li>
                                 @endforeach
                             </ul>
