@@ -54,6 +54,14 @@ class User extends Authenticatable
         return $this->hasMany(Adhesion::class, 'utilisateur_id');
     }
 
+    public function hasActiveColocation(): bool
+    {
+        return $this->adhesions()
+            ->whereNull('left_at')
+            ->whereHas('colocation', fn($q) => $q->where('statut', 'active'))
+            ->exists();
+    }
+
     public function colocations()
     {
         return $this->belongsToMany(Colocation::class, 'adhesions', 'utilisateur_id', 'colocation_id')

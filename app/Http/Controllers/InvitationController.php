@@ -84,6 +84,10 @@ class InvitationController extends Controller
                 ->with('success', 'T\'es deja dedans.');
         }
 
+        if ($user->role_global !== 'admin' && $user->hasActiveColocation()) {
+            return redirect()->route('dashboard')->with('error', 'Tu as deja une colocation active.');
+        }
+
         $invitation->colocation->membres()->attach($user->id, [
             'role_dans_colocation' => 'membre',
             'date_adhesion' => now(),

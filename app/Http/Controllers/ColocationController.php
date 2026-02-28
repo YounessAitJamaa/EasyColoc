@@ -23,6 +23,11 @@ class ColocationController extends Controller
             'description' => 'nullable|string',
         ]);
 
+        $user = Auth::user();
+        if ($user->role_global !== 'admin' && $user->hasActiveColocation()) {
+            return back()->withInput()->with('error', 'Tu as deja une colocation active.');
+        }
+
         try {
             DB::beginTransaction();
 
