@@ -35,6 +35,7 @@ class Colocation extends Model
     {
         return $this->belongsToMany(User::class, 'adhesions', 'colocation_id', 'utilisateur_id')
             ->withPivot(['role_dans_colocation', 'date_adhesion', 'left_at'])
+            ->wherePivotNull('left_at')
             ->withTimestamps();
     }
 

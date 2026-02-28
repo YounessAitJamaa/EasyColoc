@@ -37,6 +37,22 @@
                     @else
                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                             @foreach(Auth::user()->colocations as $colocation)
+                                @if($colocation->statut === 'annulee')
+                                    <div class="block p-4 border border-gray-200 rounded-lg bg-gray-50 opacity-75 cursor-not-allowed">
+                                        <div class="flex items-center justify-between mb-2">
+                                            <h4 class="font-bold text-gray-500 uppercase text-sm tracking-wider">
+                                                {{ $colocation->nom }}
+                                            </h4>
+                                            <span class="text-xs px-2 py-1 bg-red-100 text-red-700 rounded">Annulee</span>
+                                        </div>
+                                        <p class="text-gray-400 text-sm line-clamp-2 truncate">
+                                            {{ $colocation->description ?: __('Aucune description') }}
+                                        </p>
+                                        <div class="mt-4 text-xs text-gray-400">
+                                            {{ __('Colocation desactivee') }}
+                                        </div>
+                                    </div>
+                                @else
                                 <a href="{{ route('colocations.show', $colocation->id) }}"
                                     class="block p-4 border border-gray-200 rounded-lg hover:border-indigo-400 hover:shadow-sm transition-all">
                                     <div class="flex items-center justify-between mb-2">
@@ -57,6 +73,7 @@
                                         {{ $colocation->membres()->count() }} {{ __('membres') }}
                                     </div>
                                 </a>
+                                @endif
                             @endforeach
                         </div>
                     @endif

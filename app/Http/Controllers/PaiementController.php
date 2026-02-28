@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Colocation;
 use App\Models\Paiement;
 use Illuminate\Http\Request;
 
@@ -15,6 +16,11 @@ class PaiementController extends Controller
             'beneficiaire_id' => 'required|exists:users,id',
             'montant' => 'required|numeric|min:0.01',
         ]);
+
+        $colocation = Colocation::findOrFail($validated['colocation_id']);
+        if ($colocation->statut === 'annulee') {
+            return back()->with('error', 'Cette colocation est annulee.');
+        }
 
         Paiement::create([
             'colocation_id' => $validated['colocation_id'],

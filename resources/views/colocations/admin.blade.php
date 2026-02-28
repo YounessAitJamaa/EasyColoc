@@ -57,6 +57,28 @@
                         {{ __('Attention, si tu supprime c\'est fini.') }}
                     </p>
 
+                    @if (session('error'))
+                        <div class="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+                            <span class="block sm:inline">{{ session('error') }}</span>
+                        </div>
+                    @endif
+
+                    @if($colocation->statut === 'active')
+                        <form action="{{ route('colocations.admin.cancel', $colocation->id) }}" method="POST"
+                            onsubmit="return confirm('Tu es sur de vouloir annuler cette colocation ?');"
+                            class="mb-4">
+                            @csrf
+                            <button type="submit"
+                                class="px-4 py-2 bg-yellow-500 text-white text-sm rounded hover:bg-yellow-600">
+                                {{ __('Annuler la colocation') }}
+                            </button>
+                        </form>
+                    @else
+                        <p class="text-sm text-gray-500 mb-4">
+                            {{ __('Cette colocation est annulee.') }}
+                        </p>
+                    @endif
+
                     <form action="{{ route('colocations.admin.destroy', $colocation->id) }}" method="POST"
                         onsubmit="return confirm('Tu es sur de vouloir supprimer ?');">
                         @csrf

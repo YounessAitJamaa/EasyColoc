@@ -16,6 +16,34 @@ class ColocationController extends Controller
         return view('colocations.create');
     }
 
+    public function leave($id)
+    {
+        $colocation = Colocation::findOrFail($id);
+
+        if ($colocation->statut === 'annulee') {
+            return redirect()->route('dashboard')->with('error', 'Cette colocation est annulee.');
+        }
+
+        $adhesion = Adhesion::where('colocation_id', $colocation->id)
+            ->where('utilisateur_id', Auth::id())
+            ->whereNull('left_at')
+            ->first();
+
+        if (!$adhesion) {
+            abort(403, 'Tu ne fais pas partie de cette colocation.');
+        }
+
+        if ($adhesion->role_dans_colocation === 'owner') {
+            return redirect()->route('colocations.show', $colocation->id)
+                ->with('error', 'Le owner ne peut pas quitter la colocation.');
+        }
+
+        $adhesion->left_at = now();
+        $adhesion->save();
+
+        return redirect()->route('dashboard')->with('success', 'Tu as quitte la colocation.');
+    }
+
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -59,6 +87,10 @@ class ColocationController extends Controller
     public function show($id)
     {
         $colocation = Colocation::findOrFail($id);
+
+        if ($colocation->statut === 'annulee') {
+            return redirect()->route('dashboard')->with('error', 'Cette colocation est annulee.');
+        }
 
         if (!$colocation->membres()->where('utilisateur_id', Auth::id())->exists()) {
             abort(403, 'C\'est pas pour toi ca.');

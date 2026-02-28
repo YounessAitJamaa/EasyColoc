@@ -27,6 +27,7 @@ Route::middleware(['auth', 'banned'])->group(function () {
     Route::get('/colocations/create', [ColocationController::class, 'create'])->name('colocations.create');
     Route::post('/colocations', [ColocationController::class, 'store'])->name('colocations.store');
     Route::get('/colocations/{id}', [ColocationController::class, 'show'])->name('colocations.show');
+    Route::post('/colocations/{id}/leave', [ColocationController::class, 'leave'])->name('colocations.leave');
 
     // Invitation routes
     Route::get('/colocations/{id}/invite', [InvitationController::class, 'create'])->name('invitations.create');
@@ -49,6 +50,8 @@ Route::middleware(['auth', 'banned'])->group(function () {
     Route::get('/colocations/{id}/admin', [ColocationAdminController::class, 'index'])->name('colocations.admin');
     Route::patch('/colocations/{id}/admin', [ColocationAdminController::class, 'update'])->name('colocations.admin.update');
     Route::delete('/colocations/{id}/admin', [ColocationAdminController::class, 'destroy'])->name('colocations.admin.destroy');
+    Route::post('/colocations/{id}/cancel', [ColocationAdminController::class, 'cancel'])->name('colocations.admin.cancel');
+    Route::post('/colocations/{colocationId}/membres/{userId}/remove', [ColocationAdminController::class, 'removeMember'])->name('colocations.admin.members.remove');
 
     // Paiement routes
     Route::post('/paiements', [PaiementController::class, 'store'])->name('paiements.store');

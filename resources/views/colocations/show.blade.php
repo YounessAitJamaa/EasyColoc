@@ -15,6 +15,16 @@
                         {{ __('Administration') }}
                     </a>
                     <span class="text-gray-300">|</span>
+                @else
+                    <form action="{{ route('colocations.leave', $colocation->id) }}" method="POST"
+                        onsubmit="return confirm('Tu es sur de vouloir quitter cette colocation ?');">
+                        @csrf
+                        <button type="submit"
+                            class="text-xs text-red-600 hover:text-red-800 transition font-semibold">
+                            {{ __('Quitter la colocation') }}
+                        </button>
+                    </form>
+                    <span class="text-gray-300">|</span>
                 @endif
 
                 <a href="{{ route('categories.index', $colocation->id) }}"
@@ -106,6 +116,21 @@
                                             <p class="text-[10px] text-gray-400">Paye:
                                                 {{ number_format($balances[$membre->id]['paye'], 2) }} €
                                             </p>
+                                        </div>
+                                    @endif
+
+                                    @if($isOwner && $membre->id !== Auth::id())
+                                        <div class="ml-4">
+                                            <form
+                                                action="{{ route('colocations.admin.members.remove', ['colocationId' => $colocation->id, 'userId' => $membre->id]) }}"
+                                                method="POST"
+                                                onsubmit="return confirm('Retirer ce membre de la colocation ?');">
+                                                @csrf
+                                                <button type="submit"
+                                                    class="text-[11px] text-red-600 hover:text-red-800">
+                                                    {{ __('Retirer') }}
+                                                </button>
+                                            </form>
                                         </div>
                                     @endif
                                 </li>

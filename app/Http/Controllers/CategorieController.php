@@ -13,6 +13,10 @@ class CategorieController extends Controller
     {
         $colocation = Colocation::findOrFail($colocationId);
 
+        if ($colocation->statut === 'annulee') {
+            return redirect()->route('dashboard')->with('error', 'Cette colocation est annulee.');
+        }
+
         if (!$colocation->membres()->where('utilisateur_id', Auth::id())->exists()) {
             abort(403);
         }
@@ -25,6 +29,10 @@ class CategorieController extends Controller
     public function store(Request $request, $colocationId)
     {
         $colocation = Colocation::findOrFail($colocationId);
+
+        if ($colocation->statut === 'annulee') {
+            return redirect()->route('dashboard')->with('error', 'Cette colocation est annulee.');
+        }
 
         if (!$colocation->membres()->where('utilisateur_id', Auth::id())->exists()) {
             abort(403);
@@ -46,6 +54,10 @@ class CategorieController extends Controller
     {
         $categorie = Categorie::findOrFail($id);
         $colocationId = $categorie->colocation_id;
+
+        if ($categorie->colocation->statut === 'annulee') {
+            return redirect()->route('dashboard')->with('error', 'Cette colocation est annulee.');
+        }
 
         if (!$categorie->colocation->membres()->where('utilisateur_id', Auth::id())->exists()) {
             abort(403);
