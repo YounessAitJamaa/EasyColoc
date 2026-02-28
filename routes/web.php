@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\ColocationController;
 use App\Http\Controllers\InvitationController;
 use App\Http\Controllers\CategorieController;
@@ -51,6 +52,11 @@ Route::middleware('auth')->group(function () {
 
     // Paiement routes
     Route::post('/paiements', [PaiementController::class, 'store'])->name('paiements.store');
+
+    // --- ADMINISTRATION GLOBALE ---
+    Route::middleware(['admin'])->prefix('admin')->name('admin.')->group(function () {
+        Route::get('/dashboard', [AdminController::class, 'index'])->name('dashboard');
+    });
 });
 
 require __DIR__ . '/auth.php';
