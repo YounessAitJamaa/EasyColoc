@@ -45,6 +45,25 @@
                 <div class="p-6">
                     <h3 class="text-lg font-medium text-gray-900 mb-4">Liste des utilisateurs</h3>
 
+                    <form action="{{ route('admin.dashboard') }}" method="GET" class="mb-4 flex gap-2 flex-wrap items-end">
+                        <div class="flex-1 min-w-[200px]">
+                            <label for="q" class="block text-sm font-medium text-gray-700 mb-1">Rechercher</label>
+                            <input type="text" id="q" name="q" value="{{ request('q') }}"
+                                placeholder="Nom ou email..."
+                                class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm">
+                        </div>
+                        <button type="submit"
+                            class="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-md hover:bg-indigo-700">
+                            Rechercher
+                        </button>
+                        @if(request('q'))
+                            <a href="{{ route('admin.dashboard') }}"
+                                class="px-4 py-2 bg-gray-200 text-gray-700 text-sm font-medium rounded-md hover:bg-gray-300">
+                                Tout afficher
+                            </a>
+                        @endif
+                    </form>
+
                     @if (session('success'))
                         <div class="mb-4 p-3 bg-green-100 text-green-800 rounded">{{ session('success') }}</div>
                     @endif

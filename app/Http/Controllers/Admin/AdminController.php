@@ -10,7 +10,7 @@ use Illuminate\Http\Request;
 
 class AdminController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $stats = [
             'total_utilisateurs' => User::count(),
@@ -18,7 +18,17 @@ class AdminController extends Controller
             'total_depenses' => Depense::sum('montant'),
         ];
 
-        $users = User::orderBy('name')->get();
+        $users = User::orderBy('name');
+
+        if ($request->filled('q')) {
+            $q = $request->input('q');
+            $users = $users->where(function ($query) use ($q) {
+                $query->where('name', 'like', "%{$q}%")
+                    ->orWhere('email', 'like', "%{$q}%");
+            });
+        }
+
+        $users = $users->get();
 
         return view('admin.dashboard', compact('stats', 'users'));
     }
