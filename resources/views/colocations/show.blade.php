@@ -44,11 +44,22 @@
             @endif
 
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6 text-gray-900">
-                    <h3 class="text-lg font-medium text-gray-900 mb-4">{{ __('A propos') }}</h3>
+                <div class="p-6 text-gray-900 border-b border-gray-100 italic">
                     <p class="text-gray-600">
                         {{ $colocation->description ?: __('Pas de description.') }}
                     </p>
+                </div>
+                <!-- Resume Financier -->
+                <div class="grid grid-cols-2 divide-x divide-gray-100 bg-gray-50/50">
+                    <div class="p-4 text-center">
+                        <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">{{ __('Total des depenses') }}
+                        </p>
+                        <p class="text-xl font-bold text-gray-900">{{ number_format($totalDepenses, 2) }} €</p>
+                    </div>
+                    <div class="p-4 text-center">
+                        <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">{{ __('Part par personne') }}</p>
+                        <p class="text-xl font-bold text-indigo-600">{{ number_format($partIndividuelle, 2) }} €</p>
+                    </div>
                 </div>
             </div>
 
@@ -71,15 +82,30 @@
                                             {{ strtoupper(substr($membre->name, 0, 1)) }}
                                         </div>
                                         <div class="ml-3 text-sm">
-                                            <p class="font-medium text-gray-900">{{ $membre->name }}</p>
-                                            <p class="text-gray-500 capitalize text-xs">
+                                            <div class="flex items-center">
+                                                <p class="font-medium text-gray-900">{{ $membre->name }}</p>
+                                                @if($membre->id === Auth::id())
+                                                    <span
+                                                        class="ml-2 text-[10px] bg-gray-100 px-1 rounded text-gray-500">Moi</span>
+                                                @endif
+                                            </div>
+                                            <p class="text-gray-500 capitalize text-[10px]">
                                                 {{ $membre->pivot->role_dans_colocation }}
                                             </p>
                                         </div>
                                     </div>
-                                    @if($membre->id === Auth::id())
-                                        <span
-                                            class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">Vous</span>
+
+                                    <!-- Solde du membre -->
+                                    @if(isset($balances[$membre->id]))
+                                        <div class="text-right">
+                                            <p
+                                                class="text-sm font-bold {{ $balances[$membre->id]['solde'] >= 0 ? 'text-green-600' : 'text-red-600' }}">
+                                                {{ $balances[$membre->id]['solde'] >= 0 ? '+' : '' }}{{ number_format($balances[$membre->id]['solde'], 2) }}
+                                                €
+                                            </p>
+                                            <p class="text-[10px] text-gray-400">Paye:
+                                                {{ number_format($balances[$membre->id]['paye'], 2) }} €</p>
+                                        </div>
                                     @endif
                                 </li>
                             @endforeach
