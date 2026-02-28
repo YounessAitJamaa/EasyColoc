@@ -56,6 +56,8 @@ Route::middleware('auth')->group(function () {
     // --- ADMINISTRATION GLOBALE ---
     Route::middleware(['admin'])->prefix('admin')->name('admin.')->group(function () {
         Route::get('/dashboard', [AdminController::class, 'index'])->name('dashboard');
+        Route::post('/users/{user}/ban', [AdminController::class, 'ban'])->name('users.ban');
+        Route::post('/users/{user}/unban', [AdminController::class, 'unban'])->name('users.unban');
     });
 });
 

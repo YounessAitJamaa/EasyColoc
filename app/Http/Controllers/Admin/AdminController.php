@@ -20,4 +20,16 @@ class AdminController extends Controller
 
         return view('admin.dashboard', compact('stats'));
     }
+
+    public function ban(User $user)
+    {
+        $user->update(['est_banni' => true]);
+        return redirect()->route('admin.dashboard')->with('success', 'Utilisateur banni.');
+    }
+
+    public function unban(User $user)
+    {
+        $user->update(['est_banni' => false]);
+        return redirect()->route('admin.dashboard')->with('success', 'Utilisateur debanni.');
+    }
 }

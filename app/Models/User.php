@@ -22,6 +22,7 @@ class User extends Authenticatable
         'email',
         'password',
         'role_global',
+        'est_banni',
     ];
 
     /**
@@ -44,6 +45,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'est_banni' => 'boolean',
         ];
     }
 
