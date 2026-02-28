@@ -42,9 +42,57 @@
             </div>
 
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6 text-gray-900 border-t border-gray-100">
-                    <h3 class="text-lg font-medium text-gray-900 mb-2">{{ __('Statistiques de la plateforme') }}</h3>
-                    
+                <div class="p-6">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Liste des utilisateurs</h3>
+
+                    @if (session('success'))
+                        <div class="mb-4 p-3 bg-green-100 text-green-800 rounded">{{ session('success') }}</div>
+                    @endif
+
+                    @if($users->isEmpty())
+                        <p class="text-gray-500">Pas d'utilisateurs.</p>
+                    @else
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead>
+                                    <tr>
+                                        <th class="px-4 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase">Nom</th>
+                                        <th class="px-4 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
+                                        <th class="px-4 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase">Statut</th>
+                                        <th class="px-4 py-3 bg-gray-50 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    @foreach($users as $user)
+                                        <tr>
+                                            <td class="px-4 py-3 text-sm text-gray-900">{{ $user->name }}</td>
+                                            <td class="px-4 py-3 text-sm text-gray-500">{{ $user->email }}</td>
+                                            <td class="px-4 py-3">
+                                                @if($user->est_banni)
+                                                    <span class="px-2 py-1 text-xs font-medium rounded bg-red-100 text-red-800">Banni</span>
+                                                @else
+                                                    <span class="px-2 py-1 text-xs font-medium rounded bg-green-100 text-green-800">Actif</span>
+                                                @endif
+                                            </td>
+                                            <td class="px-4 py-3 text-right">
+                                                @if($user->est_banni)
+                                                    <form action="{{ route('admin.users.unban', $user) }}" method="POST" class="inline">
+                                                        @csrf
+                                                        <button type="submit" class="text-sm text-green-600 hover:text-green-800">Debannir</button>
+                                                    </form>
+                                                @else
+                                                    <form action="{{ route('admin.users.ban', $user) }}" method="POST" class="inline">
+                                                        @csrf
+                                                        <button type="submit" class="text-sm text-red-600 hover:text-red-800">Bannir</button>
+                                                    </form>
+                                                @endif
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    @endif
                 </div>
             </div>
         </div>

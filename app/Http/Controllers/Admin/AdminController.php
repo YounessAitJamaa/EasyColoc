@@ -18,7 +18,9 @@ class AdminController extends Controller
             'total_depenses' => Depense::sum('montant'),
         ];
 
-        return view('admin.dashboard', compact('stats'));
+        $users = User::orderBy('name')->get();
+
+        return view('admin.dashboard', compact('stats', 'users'));
     }
 
     public function ban(User $user)
