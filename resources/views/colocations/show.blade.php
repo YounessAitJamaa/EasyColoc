@@ -104,7 +104,8 @@
                                                 €
                                             </p>
                                             <p class="text-[10px] text-gray-400">Paye:
-                                                {{ number_format($balances[$membre->id]['paye'], 2) }} €</p>
+                                                {{ number_format($balances[$membre->id]['paye'], 2) }} €
+                                            </p>
                                         </div>
                                     @endif
                                 </li>
@@ -112,6 +113,33 @@
                         </ul>
                     </div>
                 </div>
+
+                <!-- Suggestions de remboursements -->
+                @if(!empty($suggestions))
+                    <div class="md:col-span-1 bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                        <div class="p-6">
+                            <h3 class="text-lg font-medium text-gray-900 mb-4">{{ __('Qui doit payer qui ?') }}</h3>
+                            <ul class="space-y-3">
+                                @foreach($suggestions as $suggestion)
+                                    <li class="p-3 bg-gray-50 rounded-lg border border-gray-100 text-sm">
+                                        <div class="flex flex-col">
+                                            <span class="text-gray-600">
+                                                <strong class="text-red-600">{{ $suggestion['payeur_nom'] }}</strong>
+                                                doit donner
+                                            </span>
+                                            <span class="text-lg font-bold text-gray-900 my-1">
+                                                {{ number_format($suggestion['montant'], 2) }} €
+                                            </span>
+                                            <span class="text-gray-600">
+                                                à <strong class="text-green-600">{{ $suggestion['receveur_nom'] }}</strong>
+                                            </span>
+                                        </div>
+                                    </li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    </div>
+                @endif
 
                 <div class="md:col-span-2 space-y-6">
                     <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">

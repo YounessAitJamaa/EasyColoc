@@ -73,10 +73,52 @@ class ColocationController extends Controller
             $solde = $payParCeMembre - $partIndividuelle;
 
             $balances[$membre->id] = [
+                'id' => $membre->id,
                 'nom' => $membre->name,
                 'paye' => $payParCeMembre,
                 'solde' => $solde,
             ];
+        }
+
+        // --- Logique "Qui doit a qui" ---
+        $debiteurs = [];
+        $creanciers = [];
+
+        foreach ($balances as $b) {
+            if ($b['solde'] < -0.01) {
+                $debiteurs[] = ['id' => $b['id'], 'nom' => $b['nom'], 'montant' => abs($b['solde'])];
+            } elseif ($b['solde'] > 0.01) {
+                $creanciers[] = ['id' => $b['id'], 'nom' => $b['nom'], 'montant' => $b['solde']];
+            }
+        }
+
+        $suggestions = [];
+        $d = 0; // index debiteurs
+        $c = 0; // index creanciers
+
+        while ($d < count($debiteurs) && $c < count($creanciers)) {
+            $payeur = &$debiteurs[$d];
+            $receveur = &$creanciers[$c];
+
+            $montantAPayer = min($payeur['montant'], $receveur['montant']);
+
+            if ($montantAPayer > 0) {
+                $suggestions[] = [
+                    'payeur_id' => $payeur['id'],
+                    'payeur_nom' => $payeur['nom'],
+                    'receveur_id' => $receveur['id'],
+                    'receveur_nom' => $receveur['nom'],
+                    'montant' => $montantAPayer,
+                ];
+            }
+
+            $payeur['montant'] -= $montantAPayer;
+            $receveur['montant'] -= $montantAPayer;
+
+            if ($payeur['montant'] < 0.01)
+                $d++;
+            if ($receveur['montant'] < 0.01)
+                $c++;
         }
 
         return view('colocations.show', [
@@ -84,6 +126,7 @@ class ColocationController extends Controller
             'totalDepenses' => $totalDepenses,
             'partIndividuelle' => $partIndividuelle,
             'balances' => $balances,
+            'suggestions' => $suggestions,
         ]);
     }
 }
