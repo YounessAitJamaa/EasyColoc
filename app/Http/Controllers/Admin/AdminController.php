@@ -25,6 +25,9 @@ class AdminController extends Controller
 
     public function ban(User $user)
     {
+        if ($user->role_global === 'admin' && User::where('role_global', 'admin')->count() <= 1) {
+            return redirect()->route('admin.dashboard')->with('error', 'Impossible de bannir l\' admin.');
+        }
         $user->update(['est_banni' => true]);
         return redirect()->route('admin.dashboard')->with('success', 'Utilisateur banni.');
     }

@@ -48,6 +48,9 @@
                     @if (session('success'))
                         <div class="mb-4 p-3 bg-green-100 text-green-800 rounded">{{ session('success') }}</div>
                     @endif
+                    @if (session('error'))
+                        <div class="mb-4 p-3 bg-red-100 text-red-800 rounded">{{ session('error') }}</div>
+                    @endif
 
                     @if($users->isEmpty())
                         <p class="text-gray-500">Pas d'utilisateurs.</p>
@@ -76,12 +79,12 @@
                                             </td>
                                             <td class="px-4 py-3 text-right">
                                                 @if($user->est_banni)
-                                                    <form action="{{ route('admin.users.unban', $user) }}" method="POST" class="inline">
+                                                    <form action="{{ route('admin.users.unban', $user) }}" method="POST" class="inline" onsubmit="return confirm('Debannir ce user ?');">
                                                         @csrf
                                                         <button type="submit" class="text-sm text-green-600 hover:text-green-800">Debannir</button>
                                                     </form>
                                                 @else
-                                                    <form action="{{ route('admin.users.ban', $user) }}" method="POST" class="inline">
+                                                    <form action="{{ route('admin.users.ban', $user) }}" method="POST" class="inline" onsubmit="return confirm('Bannir ce user ?');">
                                                         @csrf
                                                         <button type="submit" class="text-sm text-red-600 hover:text-red-800">Bannir</button>
                                                     </form>

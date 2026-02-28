@@ -49,6 +49,13 @@ class LoginRequest extends FormRequest
             ]);
         }
 
+        if (Auth::user()->est_banni) {
+            Auth::logout();
+            throw ValidationException::withMessages([
+                'email' => 'Compte banni. Contacte un admin.',
+            ]);
+        }
+
         RateLimiter::clear($this->throttleKey());
     }
 
