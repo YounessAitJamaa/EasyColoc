@@ -165,7 +165,7 @@ class ColocationController extends Controller
         }
 
         return view('colocations.show', [
-            'colocation' => $colocation->load(['membres', 'categories', 'depenses', 'paiements']),
+            'colocation' => $colocation->load(['membres', 'categories', 'depenses.payeur', 'depenses.categorie', 'paiements']),
             'totalDepenses' => $totalDepenses,
             'partIndividuelle' => $partIndividuelle,
             'balances' => $balances,

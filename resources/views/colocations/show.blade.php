@@ -5,6 +5,8 @@
                 {{ $colocation->nom }}
             </h2>
             <div class="space-x-2 flex items-center">
+                <span class="text-xs text-gray-500">{{ __('Rep') }}: {{ Auth::user()->score_reputation ?? 0 }}</span>
+                <span class="text-gray-300">|</span>
                 @php
                     $isOwner = $colocation->membres->firstWhere('id', Auth::id())?->pivot->role_dans_colocation === 'owner';
                 @endphp
@@ -187,7 +189,7 @@
                 <div class="md:col-span-2 space-y-6">
                     <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                         <div class="p-6">
-                            <h3 class="text-lg font-medium text-gray-900 mb-4">{{ __('Activite Recente') }}</h3>
+                            <h3 class="text-lg font-medium text-gray-900 mb-4">{{ __('Historique des depenses') }}</h3>
                             @if($colocation->depenses->isEmpty())
                                 <div class="text-center py-8">
                                     <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24"
@@ -199,21 +201,46 @@
                                     <p class="mt-1 text-sm text-gray-500">
                                         {{ __('Ajoute une depense pour commencer.') }}
                                     </p>
-
                                 </div>
                             @else
-                                <ul class="divide-y divide-gray-100">
-                                    @foreach($colocation->depenses as $depense)
-                                        <li class="py-4">
-                                            <div class="flex items-center justify-between">
-                                                <span class="font-medium">{{ $depense->titre }}</span>
-                                                <span
-                                                    class="font-bold text-indigo-600">{{ number_format($depense->montant, 2) }}
-                                                    €</span>
-                                            </div>
-                                        </li>
-                                    @endforeach
-                                </ul>
+                                <div class="overflow-x-auto">
+                                    <table class="min-w-full divide-y divide-gray-200">
+                                        <thead>
+                                            <tr>
+                                                <th class="px-4 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase">{{ __('Date') }}</th>
+                                                <th class="px-4 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase">{{ __('Titre') }}</th>
+                                                <th class="px-4 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase">{{ __('Categorie') }}</th>
+                                                <th class="px-4 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase">{{ __('Payeur') }}</th>
+                                                <th class="px-4 py-3 bg-gray-50 text-right text-xs font-medium text-gray-500 uppercase">{{ __('Montant') }}</th>
+                                                <th class="px-4 py-3 bg-gray-50 text-right text-xs font-medium text-gray-500 uppercase">{{ __('Actions') }}</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="bg-white divide-y divide-gray-200">
+                                            @foreach($colocation->depenses->sortByDesc('date_depense') as $depense)
+                                                <tr>
+                                                    <td class="px-4 py-3 text-sm text-gray-500">{{ $depense->date_depense->format('d/m/Y') }}</td>
+                                                    <td class="px-4 py-3 text-sm text-gray-900 font-medium">{{ $depense->titre }}</td>
+                                                    <td class="px-4 py-3">
+                                                        @if($depense->categorie)
+                                                            <span class="px-2 text-xs font-medium rounded-full bg-indigo-100 text-indigo-800">{{ $depense->categorie->nom }}</span>
+                                                        @else
+                                                            <span class="text-xs text-gray-400">-</span>
+                                                        @endif
+                                                    </td>
+                                                    <td class="px-4 py-3 text-sm text-gray-500">{{ $depense->payeur->name }}</td>
+                                                    <td class="px-4 py-3 text-sm text-right font-bold text-gray-900">{{ number_format($depense->montant, 2) }} €</td>
+                                                    <td class="px-4 py-3 text-right">
+                                                        <form action="{{ route('depenses.destroy', $depense->id) }}" method="POST" onsubmit="return confirm('Supprimer cette depense ?');">
+                                                            @csrf
+                                                            @method('DELETE')
+                                                            <button type="submit" class="text-xs text-red-600 hover:text-red-800">{{ __('Supprimer') }}</button>
+                                                        </form>
+                                                    </td>
+                                                </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+                                </div>
                             @endif
                             <div class="mt-6">
                                 <a href="{{ route('depenses.index', $colocation->id) }}"

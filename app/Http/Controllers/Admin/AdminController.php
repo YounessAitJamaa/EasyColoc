@@ -14,8 +14,9 @@ class AdminController extends Controller
     {
         $stats = [
             'total_utilisateurs' => User::count(),
-            'total_colocations' => Colocation::count(),
+            'total_colocations' => Colocation::where('statut', 'active')->count(),
             'total_depenses' => Depense::sum('montant'),
+            'total_bannis' => User::where('est_banni', true)->count(),
         ];
 
         $users = User::orderBy('name');
