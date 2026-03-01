@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Colocation;
 use App\Models\Adhesion;
+use App\Models\DetteImputee;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -90,6 +91,14 @@ class ColocationAdminController extends Controller
                 ->with('error', 'La colocation est deja annulee.');
         }
 
+        $solde = $colocation->calculerSoldePourUtilisateur(Auth::id());
+        $owner = Auth::user();
+        if ($solde < -0.01) {
+            $owner->decrement('score_reputation');
+        } else {
+            $owner->increment('score_reputation');
+        }
+
         $colocation->statut = 'annulee';
         $colocation->date_annulation = now();
         $colocation->save();
@@ -133,6 +142,29 @@ class ColocationAdminController extends Controller
         if ($adhesion->role_dans_colocation === 'owner') {
             return redirect()->route('colocations.show', $colocation->id)
                 ->with('error', 'Tu ne peux pas retirer le owner.');
+        }
+
+        $solde = $colocation->calculerSoldePourUtilisateur((int) $userId);
+        $membre = $adhesion->utilisateur;
+
+        if ($solde < -0.01) {
+            $membre->decrement('score_reputation');
+
+            $ownerId = Auth::id();
+            $dettes = $colocation->getDettesDuMembre((int) $userId);
+
+            foreach ($dettes as $d) {
+                $di = DetteImputee::firstOrCreate(
+                    [
+                        'colocation_id' => $colocation->id,
+                        'membre_retire_id' => (int) $userId,
+                        'payeur_id' => $ownerId,
+                        'beneficiaire_id' => $d['receveur_id'],
+                    ],
+                    ['montant' => 0]
+                );
+                $di->increment('montant', $d['montant']);
+            }
         }
 
         $adhesion->left_at = now();

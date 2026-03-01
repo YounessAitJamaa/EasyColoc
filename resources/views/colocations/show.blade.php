@@ -6,33 +6,37 @@
             </h2>
             <div class="space-x-2 flex items-center">
                 <span class="text-xs text-gray-500">{{ __('Rep') }}: {{ Auth::user()->score_reputation ?? 0 }}</span>
-                <span class="text-gray-300">|</span>
                 @php
                     $isOwner = $colocation->membres->firstWhere('id', Auth::id())?->pivot->role_dans_colocation === 'owner';
                 @endphp
 
-                @if($isOwner)
-                    <a href="{{ route('colocations.admin', $colocation->id) }}"
-                        class="text-xs text-indigo-600 hover:text-indigo-800 transition font-semibold">
-                        {{ __('Administration') }}
-                    </a>
-                    <span class="text-gray-300">|</span>
+                @if($estAncienMembre)
+                    <span class="ml-2 text-xs text-gray-500 italic">Tu as quitte cette colocation. Lecture seule.</span>
                 @else
-                    <form action="{{ route('colocations.leave', $colocation->id) }}" method="POST"
-                        onsubmit="return confirm('Tu es sur de vouloir quitter cette colocation ?');">
-                        @csrf
-                        <button type="submit"
-                            class="text-xs text-red-600 hover:text-red-800 transition font-semibold">
-                            {{ __('Quitter la colocation') }}
-                        </button>
-                    </form>
                     <span class="text-gray-300">|</span>
-                @endif
+                    @if($isOwner)
+                        <a href="{{ route('colocations.admin', $colocation->id) }}"
+                            class="text-xs text-indigo-600 hover:text-indigo-800 transition font-semibold">
+                            {{ __('Administration') }}
+                        </a>
+                        <span class="text-gray-300">|</span>
+                    @else
+                        <form action="{{ route('colocations.leave', $colocation->id) }}" method="POST"
+                            onsubmit="return confirm('Tu es sur de vouloir quitter cette colocation ?');">
+                            @csrf
+                            <button type="submit"
+                                class="text-xs text-red-600 hover:text-red-800 transition font-semibold">
+                                {{ __('Quitter la colocation') }}
+                            </button>
+                        </form>
+                        <span class="text-gray-300">|</span>
+                    @endif
 
-                <a href="{{ route('categories.index', $colocation->id) }}"
-                    class="text-xs text-gray-500 hover:text-indigo-600 transition">
-                    {{ __('Gerer Categories') }}
-                </a>
+                    <a href="{{ route('categories.index', $colocation->id) }}"
+                        class="text-xs text-gray-500 hover:text-indigo-600 transition">
+                        {{ __('Gerer Categories') }}
+                    </a>
+                @endif
                 <span
                     class="ml-4 px-3 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full uppercase tracking-wider">
                     {{ $colocation->statut }}
@@ -61,29 +65,60 @@
                         {{ $colocation->description ?: __('Pas de description.') }}
                     </p>
                 </div>
-                <!-- Resume Financier -->
                 <div class="grid grid-cols-2 divide-x divide-gray-100 bg-gray-50/50">
                     <div class="p-4 text-center">
-                        <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">{{ __('Total des depenses') }}
-                        </p>
+                        <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Total des depenses</p>
                         <p class="text-xl font-bold text-gray-900">{{ number_format($totalDepenses, 2) }} €</p>
                     </div>
                     <div class="p-4 text-center">
-                        <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">{{ __('Part par personne') }}</p>
+                        <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Part par personne</p>
                         <p class="text-xl font-bold text-indigo-600">{{ number_format($partIndividuelle, 2) }} €</p>
                     </div>
                 </div>
             </div>
+
+            @if(!empty($statsParCategorie) || !empty($statsParMois))
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                @if(!empty($statsParCategorie))
+                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Stats par categorie</h3>
+                    <ul class="space-y-2">
+                        @foreach($statsParCategorie as $nom => $total)
+                            <li class="flex justify-between text-sm">
+                                <span>{{ $nom }}</span>
+                                <span class="font-bold">{{ number_format($total, 2) }} €</span>
+                            </li>
+                        @endforeach
+                    </ul>
+                </div>
+                @endif
+                @if(!empty($statsParMois))
+                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Stats par mois</h3>
+                    <ul class="space-y-2">
+                        @foreach($statsParMois as $mois => $total)
+                            <li class="flex justify-between text-sm">
+                                <span>{{ \Carbon\Carbon::parse($mois . '-01')->translatedFormat('F Y') }}</span>
+                                <span class="font-bold">{{ number_format($total, 2) }} €</span>
+                            </li>
+                        @endforeach
+                    </ul>
+                </div>
+                @endif
+            </div>
+            @endif
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div class="md:col-span-1 bg-white overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
                         <div class="flex items-center justify-between mb-4">
                             <h3 class="text-lg font-medium text-gray-900">{{ __('Membres') }}</h3>
-                            <a href="{{ route('invitations.create', $colocation->id) }}"
-                                class="text-indigo-600 hover:text-indigo-900 text-sm font-medium">
-                                {{ __('Inviter') }}
-                            </a>
+                            @if(!$estAncienMembre && $isOwner)
+                                <a href="{{ route('invitations.create', $colocation->id) }}"
+                                    class="text-indigo-600 hover:text-indigo-900 text-sm font-medium">
+                                    {{ __('Inviter') }}
+                                </a>
+                            @endif
                         </div>
                         <ul class="divide-y divide-gray-100">
                             @foreach($colocation->membres as $membre)
@@ -103,6 +138,7 @@
                                             </div>
                                             <p class="text-gray-500 capitalize text-[10px]">
                                                 {{ $membre->pivot->role_dans_colocation }}
+                                                | Rep: {{ $membre->score_reputation ?? 0 }}
                                             </p>
                                         </div>
                                     </div>
@@ -163,7 +199,7 @@
                                         </div>
 
                                         <!-- Bouton pour confirmer le paiement -->
-                                        @if($isOwner || $suggestion['payeur_id'] == Auth::id() || $suggestion['receveur_id'] == Auth::id())
+                                        @if(!$estAncienMembre && ($isOwner || $suggestion['payeur_id'] == Auth::id() || $suggestion['receveur_id'] == Auth::id()))
                                             <form action="{{ route('paiements.store') }}" method="POST" class="mt-3">
                                                 @csrf
                                                 <input type="hidden" name="colocation_id" value="{{ $colocation->id }}">
@@ -189,8 +225,20 @@
                 <div class="md:col-span-2 space-y-6">
                     <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                         <div class="p-6">
-                            <h3 class="text-lg font-medium text-gray-900 mb-4">{{ __('Historique des depenses') }}</h3>
-                            @if($colocation->depenses->isEmpty())
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="text-lg font-medium text-gray-900">Historique des depenses</h3>
+                                <form method="GET" action="{{ route('colocations.show', $colocation->id) }}" class="flex gap-2">
+                                    <select name="mois" onchange="this.form.submit()" class="text-sm border-gray-300 rounded">
+                                        <option value="">Tous les mois</option>
+                                        @foreach($listeMois as $m)
+                                            <option value="{{ $m }}" {{ $moisFiltre === $m ? 'selected' : '' }}>
+                                                {{ \Carbon\Carbon::parse($m . '-01')->translatedFormat('F Y') }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </form>
+                            </div>
+                            @if($depensesFiltrees->isEmpty())
                                 <div class="text-center py-8">
                                     <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24"
                                         stroke="currentColor">
@@ -216,7 +264,7 @@
                                             </tr>
                                         </thead>
                                         <tbody class="bg-white divide-y divide-gray-200">
-                                            @foreach($colocation->depenses->sortByDesc('date_depense') as $depense)
+                                            @foreach($depensesFiltrees->sortByDesc('date_depense') as $depense)
                                                 <tr>
                                                     <td class="px-4 py-3 text-sm text-gray-500">{{ $depense->date_depense->format('d/m/Y') }}</td>
                                                     <td class="px-4 py-3 text-sm text-gray-900 font-medium">{{ $depense->titre }}</td>

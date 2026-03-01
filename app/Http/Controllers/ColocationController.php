@@ -38,6 +38,16 @@ class ColocationController extends Controller
                 ->with('error', 'Le owner ne peut pas quitter la colocation.');
         }
 
+        $solde = $colocation->calculerSoldePourUtilisateur(Auth::id());
+        
+        $user = Auth::user();
+
+        if ($solde < -0.01) {
+            $user->decrement('score_reputation');
+        } else {
+            $user->increment('score_reputation');
+        }
+
         $adhesion->left_at = now();
         $adhesion->save();
 
@@ -84,7 +94,7 @@ class ColocationController extends Controller
         }
     }
 
-    public function show($id)
+    public function show(Request $request, $id)
     {
         $colocation = Colocation::findOrFail($id);
 
@@ -92,84 +102,65 @@ class ColocationController extends Controller
             return redirect()->route('dashboard')->with('error', 'Cette colocation est annulee.');
         }
 
-        if (!$colocation->membres()->where('utilisateur_id', Auth::id())->exists()) {
+        $adhesion = Adhesion::where('colocation_id', $colocation->id)
+            ->where('utilisateur_id', Auth::id())
+            ->first();
+
+        if (!$adhesion) {
             abort(403, 'C\'est pas pour toi ca.');
         }
 
-        $membres = $colocation->membres;
+        $estAncienMembre = $adhesion->left_at !== null;
+
+        $resultats = $colocation->calculerBalancesEtSuggestions();
+        $totalDepenses = $resultats['totalDepenses'];
+        $partIndividuelle = $resultats['partIndividuelle'];
+        $balances = $resultats['balances'];
+        $suggestions = $resultats['suggestions'];
+
+        $colocation->load(['membres', 'categories', 'depenses.payeur', 'depenses.categorie', 'paiements']);
+
+        $moisFiltre = $request->input('mois');
         $depenses = $colocation->depenses;
-
-        $totalDepenses = $depenses->sum('montant');
-        $nombreMembres = $membres->count();
-        $partIndividuelle = $nombreMembres > 0 ? $totalDepenses / $nombreMembres : 0;
-
-        $balances = [];
-
-        foreach ($membres as $membre) {
-            $payParCeMembre = $depenses->where('payeur_id', $membre->id)->sum('montant');
-
-            $remboursementDonnes = $colocation->paiements->where('payeur_id', $membre->id)->sum('montant');
-            $remboursementRecus = $colocation->paiements->where('beneficiaire_id', $membre->id)->sum('montant');
-
-            $totalReellementPaye = $payParCeMembre + $remboursementDonnes - $remboursementRecus;
- 
-            $solde = $totalReellementPaye - $partIndividuelle;
-
-            $balances[$membre->id] = [
-                'id' => $membre->id,
-                'nom' => $membre->name,
-                'paye' => $payParCeMembre,
-                'solde' => $solde,
-            ];
+        if ($moisFiltre) {
+            $depenses = $depenses->filter(function ($d) use ($moisFiltre) {
+                return $d->date_depense->format('Y-m') === $moisFiltre;
+            });
         }
-        
-        // --- Logique "Qui doit a qui" ---
-        $debiteurs = [];
-        $creanciers = [];
 
-        foreach ($balances as $b) {
-            if ($b['solde'] < -0.01) {
-                $debiteurs[] = ['id' => $b['id'], 'nom' => $b['nom'], 'montant' => abs($b['solde'])];
-            } elseif ($b['solde'] > 0.01) {
-                $creanciers[] = ['id' => $b['id'], 'nom' => $b['nom'], 'montant' => $b['solde']];
+        $statsParCategorie = [];
+        foreach ($colocation->depenses as $d) {
+            $nom = $d->categorie ? $d->categorie->nom : 'Sans categorie';
+            if (!isset($statsParCategorie[$nom])) {
+                $statsParCategorie[$nom] = 0;
             }
+            $statsParCategorie[$nom] += $d->montant;
         }
 
-        $suggestions = [];
-        $d = 0; // index debiteurs
-        $c = 0; // index creanciers
-
-        while ($d < count($debiteurs) && $c < count($creanciers)) {
-            $payeur = &$debiteurs[$d];
-            $receveur = &$creanciers[$c];
-
-            $montantAPayer = min($payeur['montant'], $receveur['montant']);
-
-            if ($montantAPayer > 0) {
-                $suggestions[] = [
-                    'payeur_id' => $payeur['id'],
-                    'payeur_nom' => $payeur['nom'],
-                    'receveur_id' => $receveur['id'],
-                    'receveur_nom' => $receveur['nom'],
-                    'montant' => $montantAPayer,
-                ];
+        $statsParMois = [];
+        foreach ($colocation->depenses as $d) {
+            $mois = $d->date_depense->format('Y-m');
+            if (!isset($statsParMois[$mois])) {
+                $statsParMois[$mois] = 0;
             }
-
-            $payeur['montant'] -= $montantAPayer;
-            $receveur['montant'] -= $montantAPayer;
-
-            if ($payeur['montant'] < 0.01)
-                $d++;
-            if ($receveur['montant'] < 0.01)
-                $c++;
+            $statsParMois[$mois] += $d->montant;
         }
+        krsort($statsParMois);
+
+        $listeMois = $colocation->depenses->pluck('date_depense')->map(fn ($d) => $d->format('Y-m'))->unique()->sortDesc()->values();
 
         return view('colocations.show', [
-            'colocation' => $colocation->load(['membres', 'categories', 'depenses.payeur', 'depenses.categorie', 'paiements']),
+            'colocation' => $colocation,
+            'estAncienMembre' => $estAncienMembre,
+            'depensesFiltrees' => $depenses,
             'totalDepenses' => $totalDepenses,
             'partIndividuelle' => $partIndividuelle,
             'balances' => $balances,
             'suggestions' => $suggestions,
+            'moisFiltre' => $moisFiltre,
+            'statsParCategorie' => $statsParCategorie,
+            'statsParMois' => $statsParMois,
+            'listeMois' => $listeMois,
         ]);
     }
 }

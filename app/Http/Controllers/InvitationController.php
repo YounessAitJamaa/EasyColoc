@@ -96,6 +96,15 @@ class InvitationController extends Controller
             return redirect()->route('dashboard')->with('error', 'Tu as deja une colocation active.');
         }
 
+        $adhesionAncienne = Adhesion::where('colocation_id', $invitation->colocation_id)
+            ->where('utilisateur_id', $user->id)
+            ->whereNotNull('left_at')
+            ->first();
+
+        if ($adhesionAncienne) {
+            return redirect()->route('dashboard')->with('error', 'Tu as deja quitte cette colocation avant.');
+        }
+
         $invitation->colocation->membres()->attach($user->id, [
             'role_dans_colocation' => 'membre',
             'date_adhesion' => now(),
